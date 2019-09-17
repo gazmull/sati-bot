@@ -67,7 +67,7 @@ async function writeDump (db: string) {
     const dumpPath = `dumps/${db}-dump.sql`;
 
     await exec(
-      `mysqldump -u${auth.user}${auth.pass ? `-p${auth.pass}` : ''} ${db} > ${dumpPath}`,
+      `mysqldump -u${auth.user}${auth.pass ? ` -p${auth.pass}` : ''} ${db} > ${dumpPath}`,
       { cwd: process.cwd() }
     );
     logger.info(`${db} Dumped.`);
