@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "forceConsistentCasingInFileNames": true,
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "outDir": "dist",
+    "paths": {
+      "*": [
+        "typings/*"
+      ]
+    },
+    "removeComments": true,
+    "target": "es2018"
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}
