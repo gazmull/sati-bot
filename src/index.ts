@@ -1,6 +1,6 @@
 import { exec as _exec } from 'child_process';
 import { Client, MessageAttachment, TextChannel } from 'discord.js';
-import fs from 'fs-nextra';
+import * as fs from 'fs-nextra';
 import { Readable } from 'stream';
 import Tar from 'tar';
 import { promisify } from 'util';
