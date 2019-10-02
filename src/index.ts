@@ -57,8 +57,15 @@ client
 
 async function startDumping () {
   try {
-    await fs.emptyDir('dumps');
-    logger.info('Cleared dumps directory.');
+    const dumpsExists = await fs.pathExists('dumps');
+
+    if (!dumpsExists)
+      await fs.mkdir('dumps');
+    else {
+      await fs.emptyDir('dumps');
+      logger.info('Cleared dumps directory.');
+    }
+
     logger.info('Started dumping.');
 
     const { mysql } = auth;

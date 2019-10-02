@@ -10,7 +10,6 @@
   },
   "scripts": {
     "test": "gulp",
-    "dev:mkdir": "mkdir dumps",
     "dev:watch": "tsc -p . --watch",
     "dev:lint-fix": "gulp lint --fix",
     "dev:lint": "gulp lint",
