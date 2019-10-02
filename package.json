@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Backup script + Discord bot",
   "main": "dist/index.js",
+  "typings": "typings",
   "private": true,
   "engines": {
     "node": ">=12"
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@types/cron": "^1.7.1",
     "@types/node": "^12.7.5",
+    "@types/tar": "^4.0.3",
     "gulp": "^4.0.2",
     "gulp-tslint": "^8.1.4",
     "gulp-typescript": "^5.0.1",
@@ -39,6 +41,16 @@
     "@gazmull/logger": "github:gazmull/logger",
     "cron": "^1.7.2",
     "discord.js": "github:discordjs/discord.js",
-    "fs-nextra": "^0.4.5"
+    "fs-nextra": "^0.4.5",
+    "smcloudstore": "^0.2.1",
+    "tar": "^4.4.13"
+  },
+  "optionalDependencies": {
+    "@smcloudstore/aws-s3": "0.2.1",
+    "@smcloudstore/azure-storage": "0.2.0",
+    "@smcloudstore/backblaze-b2": "^0.2.1",
+    "@smcloudstore/generic-s3": "0.2.0",
+    "@smcloudstore/google-cloud-storage": "0.2.1",
+    "@smcloudstore/minio": "0.2.0"
   }
 }

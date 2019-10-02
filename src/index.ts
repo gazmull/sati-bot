@@ -1,11 +1,17 @@
 import { exec as _exec } from 'child_process';
 import { Client, MessageAttachment, TextChannel } from 'discord.js';
-import { gzip } from 'zlib';
-import { createReadStream, ReadStream, remove } from 'fs-nextra';
+import fs from 'fs-nextra';
+import { Readable } from 'stream';
+import Tar from 'tar';
 import { promisify } from 'util';
-import auth from '../auth';
+import { Auth } from '../typings/auth';
 import Winston from '@gazmull/logger';
 import { CronJob } from 'cron';
+import CloudStore from 'smcloudstore';
+
+const auth: Auth = require('../auth');
+const date = new Date().toISOString().split('T')[0];
+const archiveName = `${auth.name ? `${auth.name}.` : ''}${date}.tgz`;
 
 const exec = promisify(_exec);
 const logger = new Winston('sati').logger;
@@ -42,69 +48,117 @@ client
 
     return new CronJob({
       cronTime: '0 0 * * *',
-      onTick: () => startDumping(auth.dbs),
+      onTick: () => startDumping(),
       start: true
     });
   })
   .on('error', err => logger.error(err))
-  .login(auth.token);
+  .login(auth.discord.token);
 
-async function startDumping (dbs: string[]) {
-  logger.info('Started dumping databases.');
-
-  for (const db of dbs)
-    await writeDump(db);
-
-  logger.info('Done dumping databases.');
-}
-
-async function writeDump (db: string) {
+async function startDumping () {
   try {
-    const channel = client.channels.get(auth.channel) as TextChannel;
+    await fs.emptyDir('dumps');
+    logger.info('Cleared dumps directory.');
+    logger.info('Started dumping.');
 
-    if (!channel) throw new Error(`${db}: Cancelled. Discord channel cannot be resolved.`);
+    const { mysql } = auth;
 
-    const dumpPath = `dumps/${db}-dump.sql`;
+    if (mysql.dbs && mysql.dbs.length) {
+      logger.info('Started dumping databases.');
 
-    await exec(
-      `mysqldump -u${auth.user}${auth.pass ? ` -p${auth.pass}` : ''} ${db} > ${dumpPath}`,
-      { cwd: process.cwd() }
-    );
-    logger.info(`${db} Dumped.`);
+      for (const db of mysql.dbs)
+        await writeDbDump(db);
 
-    const dumpStream = createReadStream(dumpPath);
-    const dumpBuffer = await toBuffer(dumpStream);
-    const gzBuffer = await toGzip(dumpBuffer);
-    const date = new Date().toISOString().split('T')[0];
-    const attachment = new MessageAttachment(gzBuffer).setName(`${db}.${date}.sql.gz`);
+      logger.info('Done dumping databases.');
+    }
+    if (auth.nginxPath)
+      await writeNginxDump();
 
-    await remove(dumpPath);
-    logger.info(`${db} Deleted dump.`);
+    const tgzStream = Tar.c({ gzip: true }, [ 'dumps' ]);
+    const tgzBuffer = await toBuffer(tgzStream);
 
-    await channel.send(`Here is the backup that you requested to me for \`${db}\`!`, attachment);
-    logger.info(`${db} as gzip sent to Discord.`);
+    if (auth.discord.channel)
+      await sendToDiscord(tgzBuffer);
+    else
+      logger.warn('Skipped dumping to Discord channel: not specified.');
 
-    // Plan: add a functionality to save to actual backup storage (B2 comes to mind)
+    const { cloud } = auth;
+
+    if (cloud && cloud.provider && cloud.container && cloud.credentials)
+      await sendToCloud(tgzBuffer);
+    else
+      logger.warn('Skipped dumping to Cloud Storage: not specified.');
+
   } catch (err) { logger.error(err); }
 }
 
-function toBuffer (readableStream: ReadStream): Promise<Buffer> {
-  let buffer = '';
+async function writeDbDump (db: string) {
+  const dumpPath = `dumps/${db}-dump.sql`;
+  const { mysql } = auth;
+
+  await exec(
+    `mysqldump -u${mysql.user}${mysql.pass ? ` -p${mysql.pass}` : ''} ${db} > ${dumpPath}`,
+    { cwd: process.cwd() }
+  );
+  logger.info(`${db} dumped.`);
+}
+
+async function writeNginxDump () {
+  logger.info('Started dumping NGINX config.');
+
+  const tgzStream = Tar.c({ gzip: true }, [ auth.nginxPath ]);
+  const tgzBuffer = await toBuffer(tgzStream);
+
+  await fs.writeFile('dumps/nginx.tgz', tgzBuffer);
+  logger.info(`NGINX config dumped.`);
+}
+
+async function sendToCloud (zip: Buffer) {
+  const { cloud } = auth;
+  const store = CloudStore.Create(cloud.provider, cloud.credentials);
+
+  logger.info(`Cloud provider is ${cloud.provider}`);
+  logger.info(`Ensuring that bucket ${cloud.container.name} exists...`);
+  await store.ensureContainer(cloud.container.name, cloud.container.options);
+  logger.info(`Bucket ${cloud.container.name} is ensured.`);
+
+  logger.info(`Uploading archived backup to bucket ${cloud.container.name} as ${archiveName}...`);
+  await store.putObject(
+    cloud.container.name,
+    archiveName,
+    zip,
+    {
+      metadata: {
+        'Content-Type': 'application/gzip'
+      }
+    }
+  );
+  logger.info(`Uploaded ${archiveName} to bucket ${cloud.container.name}.`);
+
+  await sendToDiscord(`Backup has been sent to ${cloud.provider} under ${cloud.container.name} as \`${archiveName}\`!`);
+}
+
+async function sendToDiscord (content: Buffer | string) {
+  const channel = await client.channels.fetch(auth.discord.channel) as TextChannel;
+
+  if (Buffer.isBuffer(content)) {
+    const attachment = new MessageAttachment(content, archiveName);
+
+    await channel.send('Here is the backup the you requested to me!', attachment);
+    logger.info('Backup sent to Discord channel.');
+  } else {
+    await channel.send(content);
+    logger.info('Sent message to Discord channel.');
+  }
+}
+
+function toBuffer (readableStream: Readable): Promise<Buffer> {
+  let buffer = Buffer.concat([]);
 
   return new Promise((resolve, reject) => {
     readableStream
-      .on('data', chunk => buffer += chunk)
+      .on('data', chunk => buffer = Buffer.concat([ buffer, chunk ]))
       .once('error', reject)
-      .once('end', () => resolve(Buffer.from(buffer)));
-  });
-}
-
-function toGzip (buffer: Buffer): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    gzip(buffer, (err, resBuffer) => {
-      if (err) return reject(err);
-
-      resolve(resBuffer);
-    });
+      .once('end', () => resolve(buffer));
   });
 }
