@@ -1,15 +1,15 @@
 # <img src=".github/sati.png" width=64/> Sati
-Simple backup bot.
+Simple backup script & Discord bot to flex how "advanced" is your script.
 <br>
-Currently supports MySQL dumps to your Discord porn server.
-<br>
-More to come as I'm looking for a good cloud storage to properly store backups.
+Currently supports MySQL & NGINX config dumps to your Discord porn server and/or cloud storage.
 
 ## How to use
 > `$` denotes it should be executed within your CLI.
 
-1. `$ yarn dev:mkdir` if `dumps` folder doesn't exist
-2. Configure `auth.js`; template obtainable via `auth.example.js`
+1. Configure `auth.js`; template obtainable via `auth.example.js`
+   1. For cloud storage config, look for your provider's config instructions: [click me!](https://italypaleale.github.io/SMCloudStore/index.html)
+2. `$ yarn`
+   1. If yarn didn't install SMCloudStore provider modules: install any of the cloud storage provider: [click me!](https://github.com/ItalyPaleAle/SMCloudStore#add-to-your-project)
 3. `$ yarn test`
 4. `$ node .` or `$ yarn pm2`
 
