@@ -142,7 +142,7 @@ async function sendToCloud (zip: Buffer) {
   );
   logger.info(`Uploaded ${archiveName()} to bucket ${cloud.container.name}.`);
 
-  await sendToDiscord(`Backup has been sent to ${cloud.provider} under ${cloud.container.name} as \`${archiveName}\`!`);
+  await sendToDiscord(`Backup has been sent to ${cloud.provider} under ${cloud.container.name} as \`${archiveName()}\`!`);
 }
 
 async function sendToDiscord (content: Buffer | string) {
