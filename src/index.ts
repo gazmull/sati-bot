@@ -10,8 +10,8 @@ import { CronJob } from 'cron';
 import CloudStore from 'smcloudstore';
 
 const auth: Auth = require('../auth');
-const date = new Date().toISOString().split('T')[0];
-const archiveName = `${auth.name ? `${auth.name}.` : ''}${date}.tgz`;
+const date = () => new Date().toISOString().split('T')[0];
+const archiveName = () => `${auth.name ? `${auth.name}.` : ''}${date()}.tgz`;
 
 const exec = promisify(_exec);
 const logger = new Winston('sati').logger;
@@ -129,10 +129,10 @@ async function sendToCloud (zip: Buffer) {
   await store.ensureContainer(cloud.container.name, cloud.container.options);
   logger.info(`Bucket ${cloud.container.name} is ensured.`);
 
-  logger.info(`Uploading archived backup to bucket ${cloud.container.name} as ${archiveName}...`);
+  logger.info(`Uploading archived backup to bucket ${cloud.container.name} as ${archiveName()}...`);
   await store.putObject(
     cloud.container.name,
-    archiveName,
+    archiveName(),
     zip,
     {
       metadata: {
@@ -140,7 +140,7 @@ async function sendToCloud (zip: Buffer) {
       }
     }
   );
-  logger.info(`Uploaded ${archiveName} to bucket ${cloud.container.name}.`);
+  logger.info(`Uploaded ${archiveName()} to bucket ${cloud.container.name}.`);
 
   await sendToDiscord(`Backup has been sent to ${cloud.provider} under ${cloud.container.name} as \`${archiveName}\`!`);
 }
@@ -149,7 +149,7 @@ async function sendToDiscord (content: Buffer | string) {
   const channel = await client.channels.fetch(auth.discord.channel) as TextChannel;
 
   if (Buffer.isBuffer(content)) {
-    const attachment = new MessageAttachment(content, archiveName);
+    const attachment = new MessageAttachment(content, archiveName());
 
     await channel.send('Here is the backup the you requested to me!', attachment);
     logger.info('Backup sent to Discord channel.');
