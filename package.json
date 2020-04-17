@@ -26,23 +26,23 @@
   },
   "homepage": "https://github.com/gazmull/sati-bot#readme",
   "devDependencies": {
-    "@types/cron": "^1.7.1",
-    "@types/node": "^12.7.5",
+    "@types/cron": "^1.7.2",
+    "@types/node": "^13.11.1",
     "@types/tar": "^4.0.3",
     "gulp": "^4.0.2",
     "gulp-tslint": "^8.1.4",
-    "gulp-typescript": "^5.0.1",
-    "tslint": "^5.20.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "tslint": "^6.1.1",
     "tslint-eslint-rules": "^5.4.0",
-    "typescript": "^3.6.3"
+    "typescript": "^3.8.3"
   },
   "dependencies": {
     "@gazmull/logger": "github:gazmull/logger",
-    "cron": "^1.7.2",
-    "discord.js": "github:discordjs/discord.js",
-    "fs-nextra": "^0.4.5",
+    "cron": "^1.8.2",
+    "discord.js": "^12.1.1",
+    "fs-nextra": "^0.4.7",
     "smcloudstore": "^0.2.1",
-    "tar": "^4.4.13"
+    "tar": "^6.0.1"
   },
   "optionalDependencies": {
     "@smcloudstore/aws-s3": "0.2.1",
