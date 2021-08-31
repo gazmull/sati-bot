@@ -42,7 +42,7 @@
     "discord.js": "^12.1.1",
     "fs-nextra": "^0.4.7",
     "smcloudstore": "^0.2.1",
-    "tar": "^6.0.1"
+    "tar": "^6.1.9"
   },
   "optionalDependencies": {
     "@smcloudstore/aws-s3": "0.2.1",
